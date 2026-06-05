@@ -7,11 +7,9 @@ fall back to a neutral 0.0 score so the pipeline keeps moving.
 """
 from __future__ import annotations
 
-from typing import Optional
-
 from pydantic import BaseModel, Field
 
-from claude_client import get_async_client, is_available
+from claude_client import extract_json, get_async_client, is_available, text_of
 from config import SENTIMENT_MODEL
 from logging_config import get_logger
 from models import NewsHeadline
@@ -33,7 +31,10 @@ _SYSTEM = (
     "You are a financial news sentiment analyst. You read stock-market headlines "
     "and rate how bullish or bearish each is for the specific ticker's share "
     "price over the next 1-3 weeks. Use -1.0 for very bearish, 0.0 for neutral, "
-    "and +1.0 for very bullish. Be calibrated: most routine headlines are near 0."
+    "and +1.0 for very bullish. Be calibrated: most routine headlines are near 0.\n\n"
+    'Respond with ONLY a JSON object, no prose, of the form: '
+    '{"overall": <float -1..1>, "headlines": [{"index": <int>, '
+    '"score": <float -1..1>}, ...]}. Include one entry per headline index.'
 )
 
 
@@ -58,19 +59,20 @@ class NewsSentimentScorer:
 
         try:
             client = get_async_client()
-            response = await client.messages.parse(
+            message = await client.messages.create(
                 model=SENTIMENT_MODEL,
                 max_tokens=2000,
                 system=_SYSTEM,
                 messages=[{"role": "user", "content": prompt}],
-                output_format=_NewsSentimentResult,
             )
-            result: Optional[_NewsSentimentResult] = response.parsed_output
+            payload = extract_json(text_of(message))
+            result = _NewsSentimentResult.model_validate(payload) if payload else None
         except Exception as exc:  # noqa: BLE001
             log.warning("News sentiment scoring failed for %s: %s", ticker, exc)
             return headlines, 0.0
 
         if result is None:
+            log.warning("News sentiment returned no parseable JSON for %s", ticker)
             return headlines, 0.0
 
         # Map scores back onto headlines by index.

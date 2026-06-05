@@ -1,8 +1,10 @@
-"""News fetcher: NewsAPI (primary) + Benzinga (optional secondary).
+"""News fetcher: NewsAPI (primary) + Alpaca News (free secondary).
 
 Returns up to ``settings.headlines_per_ticker`` recent headlines per ticker as
 ``NewsHeadline`` objects (sentiment is filled in later by the sentiment module).
-Both sources degrade gracefully when their key is missing or a call fails.
+Alpaca's News API is free with the same Alpaca data key the bot already uses,
+so the secondary source costs nothing. Both sources degrade gracefully when
+their key is missing or a call fails.
 """
 from __future__ import annotations
 
@@ -40,10 +42,10 @@ class NewsDataClient:
         await self._client.aclose()
 
     async def get_headlines(self, ticker: str) -> list[NewsHeadline]:
-        """Combine NewsAPI + Benzinga, de-duplicated, newest first."""
+        """Combine NewsAPI + Alpaca News, de-duplicated, newest first."""
         headlines: list[NewsHeadline] = []
         headlines.extend(await self._newsapi(ticker))
-        headlines.extend(await self._benzinga(ticker))
+        headlines.extend(await self._alpaca_news(ticker))
 
         seen: set[str] = set()
         unique: list[NewsHeadline] = []
@@ -88,37 +90,39 @@ class NewsDataClient:
             )
         return out
 
-    async def _benzinga(self, ticker: str) -> list[NewsHeadline]:
-        if not settings.benzinga_api_key:
+    async def _alpaca_news(self, ticker: str) -> list[NewsHeadline]:
+        """Alpaca News API — free with the Alpaca data key the bot already uses."""
+        if not (settings.alpaca_api_key and settings.alpaca_secret_key):
             return []
         try:
             data = await request_json(
-                self._client, "GET", "https://api.benzinga.com/api/v2/news",
+                self._client, "GET",
+                f"{settings.alpaca_data_url}/v1beta1/news",
                 params={
-                    "token": settings.benzinga_api_key,
-                    "tickers": ticker,
-                    "pageSize": str(settings.headlines_per_ticker),
-                    "displayOutput": "abstract",
+                    "symbols": ticker,
+                    "limit": str(min(settings.headlines_per_ticker, 50)),
+                    "sort": "desc",
                 },
-                headers={"Accept": "application/json"},
+                headers={
+                    "APCA-API-KEY-ID": settings.alpaca_api_key,
+                    "APCA-API-SECRET-KEY": settings.alpaca_secret_key,
+                },
             )
         except (httpx.HTTPError, Exception) as exc:  # noqa: BLE001
-            log.warning("Benzinga failed for %s: %s", ticker, exc)
+            log.warning("Alpaca News failed for %s: %s", ticker, exc)
             return []
 
-        # Benzinga may return a bare list or a wrapped object.
-        items = data if isinstance(data, list) else data.get("news", [])
         out: list[NewsHeadline] = []
-        for item in items or []:
-            title = (item.get("title") or "").strip()
+        for item in data.get("news", []) or []:
+            title = (item.get("headline") or "").strip()
             if not title:
                 continue
             out.append(
                 NewsHeadline(
                     title=title,
-                    source="Benzinga",
+                    source=item.get("source", "Alpaca"),
                     url=item.get("url", ""),
-                    published_at=item.get("created"),
+                    published_at=item.get("created_at"),
                 )
             )
         return out

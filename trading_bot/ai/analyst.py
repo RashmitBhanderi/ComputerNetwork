@@ -1,10 +1,11 @@
 """Send the assembled market context to Claude and parse a structured decision.
 
-Uses the most capable model (Opus) with adaptive thinking and high effort,
-because this is the correctness-sensitive step. Structured outputs guarantee a
-schema-valid response that we convert into a `TradeSignal`. On any failure we
-return a neutral, zero-confidence signal so the strategy layer simply skips the
-ticker.
+Uses the most capable model (Opus) because this is the correctness-sensitive
+step. We ask Claude to reply with a strict JSON object and validate it into a
+`TradeSignal` (using a manual JSON parse so we don't depend on the SDK's
+structured-output helper, which isn't present in every SDK version). On any
+failure we return a neutral, zero-confidence signal so the strategy layer
+simply skips the ticker.
 """
 from __future__ import annotations
 
@@ -14,7 +15,7 @@ from pydantic import BaseModel, Field
 
 from ai.memory import TradeMemory
 from ai.prompt_builder import PromptBuilder, SYSTEM_PROMPT
-from claude_client import get_async_client, is_available
+from claude_client import extract_json, get_async_client, is_available, text_of
 from config import ANALYSIS_MODEL
 from logging_config import get_logger
 from models import (
@@ -43,6 +44,15 @@ class _AnalysisResponse(BaseModel):
     )
 
 
+_JSON_INSTRUCTION = (
+    "\n\nRespond with ONLY a JSON object (no prose, no code fences) of the form:\n"
+    '{"direction": "bullish|bearish|neutral", "strategy": "<name>", '
+    '"confidence": <0-100>, "reasoning": "<2-4 sentences>", '
+    '"entry_level": <number|null>, "exit_level": <number|null>, '
+    '"stop_level": <number|null>, "target_contract": "<option symbol|null>"}'
+)
+
+
 class Analyst:
     def __init__(self, memory: TradeMemory) -> None:
         self.memory = memory
@@ -63,22 +73,20 @@ class Analyst:
 
         try:
             client = get_async_client()
-            response = await client.messages.parse(
+            message = await client.messages.create(
                 model=ANALYSIS_MODEL,
                 max_tokens=4000,
-                thinking={"type": "adaptive"},
-                output_config={"effort": "high"},
                 system=SYSTEM_PROMPT,
-                messages=[{"role": "user", "content": prompt}],
-                output_format=_AnalysisResponse,
+                messages=[{"role": "user", "content": prompt + _JSON_INSTRUCTION}],
             )
-            parsed: Optional[_AnalysisResponse] = response.parsed_output
+            payload = extract_json(text_of(message))
+            parsed = _AnalysisResponse.model_validate(payload) if payload else None
         except Exception as exc:  # noqa: BLE001
             log.warning("Analysis failed for %s: %s", ticker, exc)
             return self._neutral(ticker, sentiment, f"analysis error: {exc}")
 
         if parsed is None:
-            return self._neutral(ticker, sentiment, "empty analysis response")
+            return self._neutral(ticker, sentiment, "empty/invalid analysis response")
 
         try:
             signal = TradeSignal(

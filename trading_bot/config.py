@@ -76,7 +76,6 @@ class Settings:
     )
     marketdata_api_key: str = field(default_factory=lambda: _get("MARKETDATA_API_KEY"))
     news_api_key: str = field(default_factory=lambda: _get("NEWS_API_KEY"))
-    benzinga_api_key: str = field(default_factory=lambda: _get("BENZINGA_API_KEY"))
     anthropic_api_key: str = field(default_factory=lambda: _get("ANTHROPIC_API_KEY"))
 
     # ─── Trading parameters ──────────────────────────────────────────────────

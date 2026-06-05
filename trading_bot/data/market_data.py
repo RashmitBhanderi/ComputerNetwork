@@ -127,18 +127,24 @@ class MarketDataClient:
         )
 
     async def get_vix(self) -> Optional[float]:
-        """Current VIX level via the marketdata.app indices endpoint."""
-        if not settings.marketdata_api_key:
-            return None
-        url = f"{MARKETDATA_BASE_URL}/v1/indices/quotes/VIX/"
+        """Current VIX level via Yahoo Finance (free, no key, ``^VIX``).
+
+        marketdata.app's index endpoint requires a separate indices entitlement,
+        so we use Yahoo's public chart endpoint instead — it's free and reliable.
+        """
+        url = "https://query1.finance.yahoo.com/v8/finance/chart/%5EVIX"
         try:
             data = await request_json(
-                self._client, "GET", url, headers=self._marketdata_headers
+                self._client, "GET", url,
+                params={"interval": "1d", "range": "1d"},
+                headers={"User-Agent": "Mozilla/5.0"},
             )
         except (httpx.HTTPError, Exception) as exc:  # noqa: BLE001
             log.warning("VIX fetch failed: %s", exc)
             return None
-        if data.get("s") != "ok":
+        try:
+            result = (data.get("chart") or {}).get("result") or []
+            price = result[0]["meta"].get("regularMarketPrice")
+            return float(price) if price is not None else None
+        except (KeyError, IndexError, TypeError):
             return None
-        last = self._first(data, "last")
-        return float(last) if last is not None else None

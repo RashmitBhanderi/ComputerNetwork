@@ -15,8 +15,8 @@ trade outcomes back into every new prompt.
 
 1. **Data pipeline** — pulls prices (Alpaca → marketdata.app fallback), the
    options chain + Greeks (marketdata.app), the latest 20 headlines per ticker
-   (NewsAPI + optional Benzinga), plus VIX, CNN Fear & Greed, and the put/call
-   ratio.
+   (NewsAPI + free Alpaca News), plus VIX (free, Yahoo Finance), CNN Fear &
+   Greed, and the put/call ratio.
 2. **Sentiment engine** — scores headlines −1.0…+1.0 with Claude, then blends
    `news 30% + IV-rank 25% + put/call 20% + VIX 15% + options-flow 10%` into a
    single score and a bullish / bearish / neutral bias.
@@ -94,7 +94,7 @@ trading_bot/
 │   ├── http_client.py       # Async httpx + tenacity retry helper
 │   ├── market_data.py       # Price/quote/VIX (Alpaca + marketdata.app)
 │   ├── options_data.py      # Chain, Greeks, put/call ratio, IV rank
-│   └── news_data.py         # Headlines (NewsAPI + Benzinga)
+│   └── news_data.py         # Headlines (NewsAPI + Alpaca News, both free)
 ├── sentiment/
 │   ├── news_sentiment.py    # Headline scoring via Claude
 │   ├── market_sentiment.py  # VIX, Fear/Greed, options-flow normalisers
@@ -160,9 +160,10 @@ skipped, so you can wire up keys incrementally.
 | Service | Used for | Where to get it |
 |---|---|---|
 | **Alpaca** (`ALPACA_API_KEY`, `ALPACA_SECRET_KEY`) | Prices + paper account | [alpaca.markets](https://alpaca.markets) → sign up → **Paper Trading** dashboard → *Generate New Key*. Keep `ALPACA_BASE_URL=https://paper-api.alpaca.markets`. |
-| **marketdata.app** (`MARKETDATA_API_KEY`) | Options chain, Greeks, IV, VIX | [dashboard.marketdata.app](https://dashboard.marketdata.app) → register → request a token (emailed to you). A data vendor (not a brokerage), so it's available **outside the US, including Canada**. Free access is a **30-day trial**. |
+| **marketdata.app** (`MARKETDATA_API_KEY`) | Options chain, Greeks, IV | [dashboard.marketdata.app](https://dashboard.marketdata.app) → register → request a token (emailed to you). A data vendor (not a brokerage), so it's available **outside the US, including Canada**. Free access is a **30-day trial**. |
+| **Yahoo Finance** (no key) | VIX (`^VIX`) | Used automatically — no signup. |
+| **Alpaca News** (uses Alpaca key) | Secondary headlines | Free with your Alpaca key above — no extra signup. |
 | **NewsAPI** (`NEWS_API_KEY`) | Headlines | [newsapi.org/register](https://newsapi.org/register) → free developer key. |
-| **Benzinga** (`BENZINGA_API_KEY`) | *Optional* secondary news | [benzinga.com/apis](https://www.benzinga.com/apis). Leave blank to disable. |
 | **Anthropic** (`ANTHROPIC_API_KEY`) | Claude sentiment + analysis | [console.anthropic.com](https://console.anthropic.com) → *API Keys*. |
 
 ---
@@ -189,7 +190,7 @@ Options focus is **0–21 DTE**, **ATM ± 2 strikes** (see `min_dte`, `max_dte`,
 ## 🧠 Models used
 
 * **Sentiment scoring** — `claude-sonnet-4-6` (high volume, cost-efficient).
-* **Trade analysis** — `claude-opus-4-8` with adaptive thinking (the
+* **Trade analysis** — `claude-opus-4-8` (the
   correctness-sensitive step).
 
 > The original spec referenced `claude-sonnet-4-20250514`; that snapshot is
