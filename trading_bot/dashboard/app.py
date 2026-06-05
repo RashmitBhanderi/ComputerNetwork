@@ -21,7 +21,7 @@ import plotly.express as px  # noqa: E402
 import plotly.graph_objects as go  # noqa: E402
 import streamlit as st  # noqa: E402
 
-from config import settings  # noqa: E402
+from config import MARKETDATA_BASE_URL, settings  # noqa: E402
 from database.db import Database  # noqa: E402
 
 st.set_page_config(page_title="AI Options Trading Bot", layout="wide")
@@ -33,34 +33,36 @@ def get_db() -> Database:
 
 
 def fetch_option_quotes(symbols: list[str]) -> dict[str, float]:
-    """Synchronously re-quote open option symbols via Tradier (best effort)."""
-    if not symbols or not settings.tradier_api_key:
+    """Synchronously re-quote open option symbols via marketdata.app (best effort)."""
+    if not symbols or not settings.marketdata_api_key:
         return {}
-    try:
-        resp = httpx.get(
-            f"{settings.tradier_base_url}/v1/markets/quotes",
-            params={"symbols": ",".join(symbols), "greeks": "false"},
-            headers={
-                "Authorization": f"Bearer {settings.tradier_api_key}",
-                "Accept": "application/json",
-            },
-            timeout=10.0,
-        )
-        resp.raise_for_status()
-        quotes = (resp.json().get("quotes") or {}).get("quote")
-    except Exception:  # noqa: BLE001
-        return {}
-    if quotes is None:
-        return {}
-    if not isinstance(quotes, list):
-        quotes = [quotes]
+    headers = {
+        "Authorization": f"Bearer {settings.marketdata_api_key}",
+        "Accept": "application/json",
+    }
     out: dict[str, float] = {}
-    for q in quotes:
-        sym = q.get("symbol")
-        bid, ask, last = q.get("bid"), q.get("ask"), q.get("last")
-        if sym is None:
+    for sym in symbols:
+        try:
+            resp = httpx.get(
+                f"{MARKETDATA_BASE_URL}/v1/options/quotes/{sym}/",
+                headers=headers,
+                timeout=10.0,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+        except Exception:  # noqa: BLE001
             continue
-        if bid is not None and ask is not None and ask > 0:
+        if data.get("s") != "ok":
+            continue
+
+        def first(key: str):
+            v = data.get(key)
+            return v[0] if isinstance(v, list) and v else None
+
+        mid, bid, ask, last = first("mid"), first("bid"), first("ask"), first("last")
+        if mid is not None:
+            out[sym] = round(float(mid), 4)
+        elif bid is not None and ask is not None and ask > 0:
             out[sym] = round((bid + ask) / 2, 4)
         elif last is not None:
             out[sym] = float(last)

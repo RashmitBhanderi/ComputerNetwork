@@ -1,18 +1,18 @@
 """Price / quote fetcher.
 
-Primary source is Alpaca (paper account, latest trade + daily bar). Tradier is
-used as a fallback quote source and also exposes the VIX level used by the
-sentiment engine. Every method degrades gracefully: if a key is missing or a
-request fails after retries, it returns ``None`` rather than raising, so the
-scheduler keeps running.
+Primary source is Alpaca (paper account, latest trade + daily bar). marketdata.app
+is the fallback quote source and supplies the VIX level used by the sentiment
+engine. Every method degrades gracefully: if a key is missing or a request fails
+after retries it returns ``None`` rather than raising, so the scheduler keeps
+running.
 """
 from __future__ import annotations
 
-from typing import Optional
+from typing import Any, Optional
 
 import httpx
 
-from config import settings
+from config import MARKETDATA_BASE_URL, settings
 from data.http_client import request_json
 from logging_config import get_logger
 from models import PriceSnapshot
@@ -42,11 +42,11 @@ class MarketDataClient:
         }
 
     async def get_price(self, ticker: str) -> Optional[PriceSnapshot]:
-        """Latest price for a ticker, Alpaca first then Tradier fallback."""
+        """Latest price for a ticker, Alpaca first then marketdata.app fallback."""
         snap = await self._alpaca_snapshot(ticker)
         if snap is not None:
             return snap
-        return await self._tradier_quote(ticker)
+        return await self._marketdata_quote(ticker)
 
     async def _alpaca_snapshot(self, ticker: str) -> Optional[PriceSnapshot]:
         if not (settings.alpaca_api_key and settings.alpaca_secret_key):
@@ -80,61 +80,65 @@ class MarketDataClient:
             volume=daily.get("v"),
         )
 
-    # ─── Tradier ─────────────────────────────────────────────────────────────
+    # ─── marketdata.app ──────────────────────────────────────────────────────
     @property
-    def _tradier_headers(self) -> dict[str, str]:
+    def _marketdata_headers(self) -> dict[str, str]:
         return {
-            "Authorization": f"Bearer {settings.tradier_api_key}",
+            "Authorization": f"Bearer {settings.marketdata_api_key}",
             "Accept": "application/json",
         }
 
-    async def _tradier_quote(self, ticker: str) -> Optional[PriceSnapshot]:
-        if not settings.tradier_api_key:
+    @staticmethod
+    def _first(data: dict, key: str) -> Optional[Any]:
+        """Pull the first element of a columnar marketdata field."""
+        val = data.get(key)
+        if isinstance(val, list) and val:
+            return val[0]
+        return None
+
+    async def _marketdata_quote(self, ticker: str) -> Optional[PriceSnapshot]:
+        if not settings.marketdata_api_key:
             return None
-        url = f"{settings.tradier_base_url}/v1/markets/quotes"
+        url = f"{MARKETDATA_BASE_URL}/v1/stocks/quotes/{ticker}/"
         try:
             data = await request_json(
-                self._client, "GET", url,
-                params={"symbols": ticker}, headers=self._tradier_headers,
+                self._client, "GET", url, headers=self._marketdata_headers
             )
         except (httpx.HTTPError, Exception) as exc:  # noqa: BLE001
-            log.warning("Tradier quote failed for %s: %s", ticker, exc)
+            log.warning("marketdata.app quote failed for %s: %s", ticker, exc)
             return None
 
-        quote = (data.get("quotes") or {}).get("quote")
-        if isinstance(quote, list):
-            quote = quote[0] if quote else None
-        if not quote or quote.get("last") is None:
+        if data.get("s") != "ok":
             return None
-        price = float(quote["last"])
-        prev_close = quote.get("prevclose")
-        change_pct = quote.get("change_percentage")
+        last = self._first(data, "last")
+        if last is None:
+            return None
+        change = self._first(data, "change")
+        change_pct = self._first(data, "changepct")
+        prev_close = last - change if change is not None else None
+        # marketdata returns changepct as a fraction (e.g. 0.012 = 1.2%).
+        change_pct_val = round(change_pct * 100, 3) if change_pct is not None else None
         return PriceSnapshot(
             ticker=ticker,
-            price=price,
-            prev_close=float(prev_close) if prev_close else None,
-            change_pct=float(change_pct) if change_pct is not None else None,
-            day_high=quote.get("high"),
-            day_low=quote.get("low"),
-            volume=quote.get("volume"),
+            price=float(last),
+            prev_close=float(prev_close) if prev_close is not None else None,
+            change_pct=change_pct_val,
+            volume=self._first(data, "volume"),
         )
 
     async def get_vix(self) -> Optional[float]:
-        """Current VIX level via Tradier (symbol ``VIX``)."""
-        if not settings.tradier_api_key:
+        """Current VIX level via the marketdata.app indices endpoint."""
+        if not settings.marketdata_api_key:
             return None
-        url = f"{settings.tradier_base_url}/v1/markets/quotes"
+        url = f"{MARKETDATA_BASE_URL}/v1/indices/quotes/VIX/"
         try:
             data = await request_json(
-                self._client, "GET", url,
-                params={"symbols": "VIX"}, headers=self._tradier_headers,
+                self._client, "GET", url, headers=self._marketdata_headers
             )
         except (httpx.HTTPError, Exception) as exc:  # noqa: BLE001
             log.warning("VIX fetch failed: %s", exc)
             return None
-        quote = (data.get("quotes") or {}).get("quote")
-        if isinstance(quote, list):
-            quote = quote[0] if quote else None
-        if not quote or quote.get("last") is None:
+        if data.get("s") != "ok":
             return None
-        return float(quote["last"])
+        last = self._first(data, "last")
+        return float(last) if last is not None else None

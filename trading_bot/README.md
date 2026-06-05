@@ -13,9 +13,10 @@ trade outcomes back into every new prompt.
 
 ## ✨ What it does
 
-1. **Data pipeline** — pulls prices (Alpaca → Tradier fallback), the options
-   chain + Greeks (Tradier), the latest 20 headlines per ticker (NewsAPI +
-   optional Benzinga), plus VIX, CNN Fear & Greed, and the CBOE put/call ratio.
+1. **Data pipeline** — pulls prices (Alpaca → marketdata.app fallback), the
+   options chain + Greeks (marketdata.app), the latest 20 headlines per ticker
+   (NewsAPI + optional Benzinga), plus VIX, CNN Fear & Greed, and the put/call
+   ratio.
 2. **Sentiment engine** — scores headlines −1.0…+1.0 with Claude, then blends
    `news 30% + IV-rank 25% + put/call 20% + VIX 15% + options-flow 10%` into a
    single score and a bullish / bearish / neutral bias.
@@ -52,7 +53,7 @@ trade outcomes back into every new prompt.
 │  options_data │  chain  ───▶ │  market_sentiment   │            │  memory ◀── DB   │
 │  news_data    │  news   ───▶ │  sentiment_engine ──┼─ score ──▶ │  analyst  ──▶ Claude
 └───────┬───────┘              └─────────────────────┘            └────────┬─────────┘
-        │ Alpaca / Tradier / NewsAPI                                       │ TradeSignal
+        │ Alpaca / marketdata.app / NewsAPI                                │ TradeSignal
         │                                                                  ▼
         │                                                       ┌────────────────────┐
         │                                                       │  trading/          │
@@ -91,7 +92,7 @@ trading_bot/
 ├── logging_config.py        # Console + rotating file logging
 ├── data/
 │   ├── http_client.py       # Async httpx + tenacity retry helper
-│   ├── market_data.py       # Price/quote/VIX (Alpaca + Tradier)
+│   ├── market_data.py       # Price/quote/VIX (Alpaca + marketdata.app)
 │   ├── options_data.py      # Chain, Greeks, put/call ratio, IV rank
 │   └── news_data.py         # Headlines (NewsAPI + Benzinga)
 ├── sentiment/
@@ -159,7 +160,7 @@ skipped, so you can wire up keys incrementally.
 | Service | Used for | Where to get it |
 |---|---|---|
 | **Alpaca** (`ALPACA_API_KEY`, `ALPACA_SECRET_KEY`) | Prices + paper account | [alpaca.markets](https://alpaca.markets) → sign up → **Paper Trading** dashboard → *Generate New Key*. Keep `ALPACA_BASE_URL=https://paper-api.alpaca.markets`. |
-| **Tradier** (`TRADIER_API_KEY`) | Options chain, Greeks, IV, VIX | [developer.tradier.com](https://developer.tradier.com) → create an account → *Sandbox* token to start (or a brokerage token for live data). |
+| **marketdata.app** (`MARKETDATA_API_KEY`) | Options chain, Greeks, IV, VIX | [dashboard.marketdata.app](https://dashboard.marketdata.app) → register → request a token (emailed to you). A data vendor (not a brokerage), so it's available **outside the US, including Canada**. Free access is a **30-day trial**. |
 | **NewsAPI** (`NEWS_API_KEY`) | Headlines | [newsapi.org/register](https://newsapi.org/register) → free developer key. |
 | **Benzinga** (`BENZINGA_API_KEY`) | *Optional* secondary news | [benzinga.com/apis](https://www.benzinga.com/apis). Leave blank to disable. |
 | **Anthropic** (`ANTHROPIC_API_KEY`) | Claude sentiment + analysis | [console.anthropic.com](https://console.anthropic.com) → *API Keys*. |
@@ -199,8 +200,9 @@ Options focus is **0–21 DTE**, **ATM ± 2 strikes** (see `min_dte`, `max_dte`,
 
 ## 📝 Notes & caveats
 
-* **IV rank** is approximated from ATM implied volatility (Tradier doesn't
-  expose a trailing-52-week IV series); it is clearly labelled as an estimate.
+* **IV rank** is approximated from ATM implied volatility (the chain endpoint
+  doesn't expose a trailing-52-week IV series); it is clearly labelled as an
+  estimate.
 * **Spreads** are priced from the long/short legs in the ATM window; the engine
   tracks the primary leg for Greeks and mark-to-market.
 * The bot never connects to a live brokerage — `paper_trader.py` simulates all

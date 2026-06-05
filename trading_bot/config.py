@@ -56,6 +56,10 @@ def _get_list(key: str, default: list[str]) -> list[str]:
 SENTIMENT_MODEL = "claude-sonnet-4-6"
 ANALYSIS_MODEL = "claude-opus-4-8"
 
+# marketdata.app is the options/Greeks + VIX provider (Canada-accessible; it's a
+# data vendor, not a brokerage, so there's no account-residency restriction).
+MARKETDATA_BASE_URL = "https://api.marketdata.app"
+
 
 @dataclass(frozen=True)
 class Settings:
@@ -70,10 +74,7 @@ class Settings:
     alpaca_data_url: str = field(
         default_factory=lambda: _get("ALPACA_DATA_URL", "https://data.alpaca.markets")
     )
-    tradier_api_key: str = field(default_factory=lambda: _get("TRADIER_API_KEY"))
-    tradier_base_url: str = field(
-        default_factory=lambda: _get("TRADIER_BASE_URL", "https://api.tradier.com")
-    )
+    marketdata_api_key: str = field(default_factory=lambda: _get("MARKETDATA_API_KEY"))
     news_api_key: str = field(default_factory=lambda: _get("NEWS_API_KEY"))
     benzinga_api_key: str = field(default_factory=lambda: _get("BENZINGA_API_KEY"))
     anthropic_api_key: str = field(default_factory=lambda: _get("ANTHROPIC_API_KEY"))
@@ -123,7 +124,7 @@ class Settings:
         required = {
             "ALPACA_API_KEY": self.alpaca_api_key,
             "ALPACA_SECRET_KEY": self.alpaca_secret_key,
-            "TRADIER_API_KEY": self.tradier_api_key,
+            "MARKETDATA_API_KEY": self.marketdata_api_key,
             "NEWS_API_KEY": self.news_api_key,
             "ANTHROPIC_API_KEY": self.anthropic_api_key,
         }
