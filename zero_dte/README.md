@@ -22,6 +22,49 @@ tickets from the dashboard.
 > loses to theta decay and friction.** Use this tool for paper practice and
 > signal study — do **not** trade it live with real money as-is.
 
+## 🔬 Walk-forward strategy research (the "find a profitable strategy" hunt)
+
+`python -m zero_dte.research` runs a systematic search designed to resist
+self-deception: **4 entry archetypes** (opening-range breakout, 14:30 afternoon
+momentum, 13:30 fade, gap-and-go) × **4 exit schemes** × **VIX/trend filters**
+= 96 configs, ranked on TRAIN (→ Jun 2025) and judged only on TEST
+(Jul 2025 → Jun 2026), plus a **walk-forward ML gate** (numpy logistic
+regression over gap, opening-range width, momentum, VIX level/change —
+retrained monthly, never sees its own evaluation month).
+
+**Result: no configuration survives out-of-sample.** Best in-sample PF 0.52;
+best OOS PF 0.43. The ML gate's learned policy is to take **zero trades** — no
+market-condition combination exceeded 55% win probability. Gated account:
+**0.0%** vs **−74.2%** trading the best base config. *The AI's optimal action
+in this strategy class is standing aside* — that is the capital-preserving
+edge it found, and it's wired into the live dashboard.
+
+### Why, structurally
+
+An ATM 0DTE option held 14:30 → 15:45 loses ~60% of its value to theta alone
+if the underlying doesn't move (premium ∝ √time). Add a ~4% spread + commissions
+and the underlying must move further than hourly-resolution signals can predict.
+
+### What a real edge would require (in honesty order)
+
+1. **Different trade structure** — defined-risk premium *selling* (credit
+   spreads, iron condors) is where most documented 0DTE edges live; you
+   excluded spreads, so this tool doesn't do them.
+2. **Minute-level entries** with tight invalidation (requires paid intraday
+   options data) instead of hourly bars.
+3. **Convexity selection** (cheap OTM on confirmed trend days) — needs real
+   historical options quotes to validate, not Black-Scholes synthesis.
+
+## 🧠 The AI layer
+
+* **ML gate** (`research.py`) — backtestable, walk-forward; currently gates
+  everything out (capital preservation).
+* **Claude live advisor** (`ai_advisor.py`) — at runtime, each rule-engine
+  ticket is sent to Claude (uses your `ANTHROPIC_API_KEY`) with the research
+  verdict embedded in its prompt; it returns go/no-go + max-1-contract sizing
+  + reasoning, shown on every dashboard ticket. Default answer is NO-GO; no
+  key → conservative offline fallback (always NO-GO).
+
 ## What's in the box
 
 | File | Purpose |

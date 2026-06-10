@@ -112,9 +112,19 @@ with tab_live:
             with st.expander(f"{icon} — {symbol} (score {sig.score}/3)", expanded=True):
                 st.write(" · ".join(sig.reasons))
                 if decision.approved:
-                    st.code(order_ticket(symbol, sig.side, strike,
-                                         decision.contracts, prem, today))
-                    rm.record_entry()
+                    from zero_dte.ai_advisor import advise
+                    adv = advise(symbol, sig.side, strike, prem, vix,
+                                 sig.reasons, rm.capital)
+                    verdict = "✅ GO" if adv.go else "🛑 NO-GO"
+                    label = "Claude advisor" if adv.source == "claude" else "Advisor (offline fallback)"
+                    st.markdown(f"**{label}: {verdict}** ({adv.confidence:.0f}%) — {adv.reasoning}")
+                    if adv.go:
+                        st.code(order_ticket(symbol, sig.side, strike,
+                                             min(decision.contracts, max(adv.size_contracts, 1)),
+                                             prem, today))
+                        rm.record_entry()
+                    else:
+                        st.info("Ticket withheld — advisor says stand aside (paper-practice the signal if you like).")
                 else:
                     st.warning(f"Signal valid but risk-blocked: {decision.reason}")
         if fired == 0:
@@ -164,3 +174,29 @@ with tab_bt:
             st.markdown("**Trade log**")
             st.dataframe(pd.read_csv(trades_path).sort_values("session", ascending=False),
                          use_container_width=True, hide_index=True, height=400)
+
+    research_path = RESULTS_DIR / "research_report.json"
+    if research_path.exists():
+        rep = json.loads(research_path.read_text())
+        with st.expander("🔬 Walk-forward strategy research (96 configs + ML gate)"):
+            if rep.get("oos_validated"):
+                st.success(f"Out-of-sample survivor found: `{rep['selected']}`")
+            else:
+                st.error(
+                    "**No configuration survived out-of-sample validation** "
+                    f"(split {rep.get('split')}). Best in-sample: "
+                    f"`{rep.get('selected', 'n/a')}`. The walk-forward ML gate "
+                    "filtered out every trade — no market condition exceeded "
+                    "55% win probability for long ATM 0DTE. Its learned action "
+                    "is to stand aside, which preserved capital "
+                    f"({rep.get('account_gated_oos', {}).get('return_pct', 0):+.1f}%) "
+                    "vs trading the base config "
+                    f"({rep.get('account_base_oos', {}).get('return_pct', 0):+.1f}%)."
+                )
+            top = rep.get("grid_top10", [])
+            if top:
+                rows = [{"config": g["config"],
+                         "train PF": g["train"]["pf"], "train n": g["train"]["trades"],
+                         "test PF": g["test"]["pf"], "test n": g["test"]["trades"],
+                         "test avg $": g["test"]["avg"]} for g in top]
+                st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
