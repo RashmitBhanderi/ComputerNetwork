@@ -55,6 +55,52 @@ and the underlying must move further than hourly-resolution signals can predict.
 3. **Convexity selection** (cheap OTM on confirmed trend days) — needs real
    historical options quotes to validate, not Black-Scholes synthesis.
 
+## 💳 Credit spreads (restriction lifted) — and why the verdict is "needs real data"
+
+`python -m zero_dte.spreads` runs the same walk-forward lab over **defined-risk
+credit spreads** (bull put / bear call / iron condor; 72 configs). The result
+is a calibration lesson, not a green light:
+
+| Synthetic IV seed | OOS survivors | Best config OOS |
+|---|---|---|
+| IV = VIX (likely too rich for intraday) | 71 of 72 | iron condor: PF 13.3, "+1201%" |
+| IV = 0.6×VIX (intraday-calibrated) | **0** | same configs → PF ~0.7 in-sample |
+
+**The sign of the edge flips on an IV parameter that synthetic pricing cannot
+pin down.** VIX is a 30-day vol including overnight gaps; real 0DTE premiums
+trade on their own intraday surface. So: the spread engine, sizing, and risk
+logic are built and tested — but the profitability question requires **real
+0DTE quotes**: either a paid history (ThetaData ~$40/mo or Polygon Options
+Starter $29/mo — say the word and I'll wire one in) or **free forward paper
+validation on moomoo's live quotes**, which is what `live.py` does.
+
+## 🚀 Live / paper trading on moomoo
+
+moomoo OpenAPI **can** supply real-time 0DTE chains, Greeks, and bid/ask — so
+live signal generation and execution run on real data (it just can't backtest
+expired contracts; no vendor-free path exists for that).
+
+Setup (on your machine):
+1. moomoo account with US options enabled + LV1 US options quote rights.
+2. Download + run the **OpenD** gateway (moomoo OpenAPI site), log in.
+3. `pip install moomoo-api`
+4. Verify: `python -m zero_dte.moomoo_exec`
+
+Daily flow (after 11:30 ET):
+```bash
+python -m zero_dte.live              # dry run: prints the condor ticket from REAL quotes
+python -m zero_dte.live --execute    # places it in moomoo SIMULATE (paper)
+```
+Every run journals to `results/live_journal.csv` — accumulate 2-3 months of
+forward paper results; that's the real-data validation that decides if this
+ever deserves real money.
+
+**Going REAL** (deliberately annoying): set `ZDTE_TRD_ENV=REAL`,
+`ZDTE_LIVE_ACK=I_UNDERSTAND_THE_RISKS`, and `MOOMOO_UNLOCK_PWD`. Limit orders
+only, hard 3-contract cap, max-loss sizing within 20% of capital, VIX>35 halt,
+one entry/day. Note: legs fill as two orders (no native combo ticket in
+OpenAPI) — the protective long leg is always placed first.
+
 ## 🧠 The AI layer
 
 * **ML gate** (`research.py`) — backtestable, walk-forward; currently gates

@@ -1,0 +1,228 @@
+{
+  "split": "2025-07-01",
+  "grid_top12": [
+    {
+      "config": "2|condor|0.2|2.0|2.5",
+      "train": {
+        "trades": 970,
+        "win_rate": 36.1,
+        "pnl": -2386.3,
+        "pf": 0.78,
+        "avg": -2.46
+      },
+      "test": {
+        "trades": 464,
+        "win_rate": 56.2,
+        "pnl": 4674.04,
+        "pf": 2.04,
+        "avg": 10.07
+      }
+    },
+    {
+      "config": "2|trend|0.2|2.0|2.5",
+      "train": {
+        "trades": 970,
+        "win_rate": 61.1,
+        "pnl": -2511.66,
+        "pf": 0.76,
+        "avg": -2.59
+      },
+      "test": {
+        "trades": 464,
+        "win_rate": 74.4,
+        "pnl": 1993.98,
+        "pf": 1.47,
+        "avg": 4.3
+      }
+    },
+    {
+      "config": "1|trend|0.2|2.0|0.0",
+      "train": {
+        "trades": 970,
+        "win_rate": 83.4,
+        "pnl": -3893.21,
+        "pf": 0.75,
+        "avg": -4.01
+      },
+      "test": {
+        "trades": 464,
+        "win_rate": 86.4,
+        "pnl": 1294.7,
+        "pf": 1.2,
+        "avg": 2.79
+      }
+    },
+    {
+      "config": "1|trend|0.2|2.0|2.5",
+      "train": {
+        "trades": 970,
+        "win_rate": 59.6,
+        "pnl": -3038.01,
+        "pf": 0.74,
+        "avg": -3.13
+      },
+      "test": {
+        "trades": 464,
+        "win_rate": 66.2,
+        "pnl": 86.06,
+        "pf": 1.01,
+        "avg": 0.19
+      }
+    },
+    {
+      "config": "2|condor|0.15|2.0|2.5",
+      "train": {
+        "trades": 970,
+        "win_rate": 37.6,
+        "pnl": -2442.34,
+        "pf": 0.71,
+        "avg": -2.52
+      },
+      "test": {
+        "trades": 464,
+        "win_rate": 57.8,
+        "pnl": 3025.13,
+        "pf": 1.89,
+        "avg": 6.52
+      }
+    },
+    {
+      "config": "1|condor|0.2|2.0|0.0",
+      "train": {
+        "trades": 970,
+        "win_rate": 72.4,
+        "pnl": -7764.78,
+        "pf": 0.7,
+        "avg": -8.0
+      },
+      "test": {
+        "trades": 464,
+        "win_rate": 79.7,
+        "pnl": 4445.4,
+        "pf": 1.51,
+        "avg": 9.58
+      }
+    },
+    {
+      "config": "1|trend|0.2|1.0|0.0",
+      "train": {
+        "trades": 970,
+        "win_rate": 81.6,
+        "pnl": -2863.55,
+        "pf": 0.7,
+        "avg": -2.95
+      },
+      "test": {
+        "trades": 464,
+        "win_rate": 85.1,
+        "pnl": 350.24,
+        "pf": 1.09,
+        "avg": 0.75
+      }
+    },
+    {
+      "config": "2|trend|0.15|2.0|2.5",
+      "train": {
+        "trades": 970,
+        "win_rate": 62.2,
+        "pnl": -2186.53,
+        "pf": 0.7,
+        "avg": -2.25
+      },
+      "test": {
+        "trades": 464,
+        "win_rate": 75.2,
+        "pnl": 1354.51,
+        "pf": 1.45,
+        "avg": 2.92
+      }
+    },
+    {
+      "config": "1|trend|0.15|2.0|2.5",
+      "train": {
+        "trades": 970,
+        "win_rate": 60.1,
+        "pnl": -2780.72,
+        "pf": 0.67,
+        "avg": -2.87
+      },
+      "test": {
+        "trades": 464,
+        "win_rate": 66.8,
+        "pnl": -205.08,
+        "pf": 0.95,
+        "avg": -0.44
+      }
+    },
+    {
+      "config": "2|condor|0.2|2.0|0.0",
+      "train": {
+        "trades": 970,
+        "win_rate": 72.8,
+        "pnl": -8153.66,
+        "pf": 0.67,
+        "avg": -8.41
+      },
+      "test": {
+        "trades": 464,
+        "win_rate": 83.4,
+        "pnl": 5954.07,
+        "pf": 1.88,
+        "avg": 12.83
+      }
+    },
+    {
+      "config": "2|trend|0.2|2.0|0.0",
+      "train": {
+        "trades": 970,
+        "win_rate": 84.0,
+        "pnl": -5173.42,
+        "pf": 0.67,
+        "avg": -5.33
+      },
+      "test": {
+        "trades": 464,
+        "win_rate": 87.7,
+        "pnl": 2404.84,
+        "pf": 1.5,
+        "avg": 5.18
+      }
+    },
+    {
+      "config": "1|condor|0.2|2.0|2.5",
+      "train": {
+        "trades": 970,
+        "win_rate": 30.9,
+        "pnl": -4432.96,
+        "pf": 0.66,
+        "avg": -4.57
+      },
+      "test": {
+        "trades": 464,
+        "win_rate": 44.8,
+        "pnl": 2310.41,
+        "pf": 1.42,
+        "avg": 4.98
+      }
+    }
+  ],
+  "survivors": [],
+  "oos_validated": false,
+  "calibration_sensitivity": {
+    "iv_mult_1.00_vix_as_0dte_iv": {
+      "oos_survivors": 71,
+      "best": "11:30 iron condor d0.15 w$2 stop2.5x",
+      "best_oos": {
+        "pf": 13.29,
+        "win_rate": 87.8,
+        "account_return_pct": 1201.0
+      },
+      "assessment": "Credits overpriced: VIX is a 30-day vol incl. overnight gaps; intraday-only vol is lower."
+    },
+    "iv_mult_0.60_intraday_calibrated": {
+      "oos_survivors": 0,
+      "assessment": "Same configs go to PF~0.7 in-sample. Edge does not survive thinner credits."
+    },
+    "conclusion": "Synthetic BS pricing CANNOT settle 0DTE credit-spread profitability \u2014 the verdict flips on IV calibration. Requires real historical 0DTE quotes (ThetaData/Polygon) or forward paper validation on real moomoo quotes before any live capital."
+  }
+}
