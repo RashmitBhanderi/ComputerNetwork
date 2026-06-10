@@ -1,0 +1,101 @@
+{
+  "start_capital": 1500.0,
+  "end_capital": 407.78,
+  "total_return_pct": -72.81,
+  "max_drawdown_pct": -70.05,
+  "overall": {
+    "trades": 75,
+    "win_rate": 28.0,
+    "pnl": -1092.21,
+    "profit_factor": 0.55,
+    "avg_win": 63.8,
+    "avg_loss": -45.04
+  },
+  "by_year": {
+    "2025": {
+      "trades": 66,
+      "win_rate": 28.8,
+      "pnl": -976.6,
+      "profit_factor": 0.57,
+      "avg_win": 67.34,
+      "avg_loss": -48.0
+    },
+    "2026": {
+      "trades": 9,
+      "win_rate": 22.2,
+      "pnl": -115.61,
+      "profit_factor": 0.34,
+      "avg_win": 30.17,
+      "avg_loss": -25.14
+    }
+  },
+  "by_symbol": {
+    "AAPL": {
+      "trades": 19,
+      "win_rate": 21.1,
+      "pnl": -355.3,
+      "profit_factor": 0.41,
+      "avg_win": 61.28,
+      "avg_loss": -40.03
+    },
+    "AMZN": {
+      "trades": 16,
+      "win_rate": 31.2,
+      "pnl": -49.72,
+      "profit_factor": 0.87,
+      "avg_win": 64.61,
+      "avg_loss": -33.89
+    },
+    "NVDA": {
+      "trades": 17,
+      "win_rate": 41.2,
+      "pnl": 62.21,
+      "profit_factor": 1.21,
+      "avg_win": 51.63,
+      "avg_loss": -29.92
+    },
+    "QQQ": {
+      "trades": 14,
+      "win_rate": 14.3,
+      "pnl": -615.65,
+      "profit_factor": 0.23,
+      "avg_win": 92.65,
+      "avg_loss": -66.75
+    },
+    "SPY": {
+      "trades": 2,
+      "win_rate": 0.0,
+      "pnl": -153.56,
+      "profit_factor": 0.0,
+      "avg_win": 0.0,
+      "avg_loss": -76.78
+    },
+    "TSLA": {
+      "trades": 7,
+      "win_rate": 42.9,
+      "pnl": 19.81,
+      "profit_factor": 1.1,
+      "avg_win": 74.94,
+      "avg_loss": -51.25
+    }
+  },
+  "by_exit": {
+    "stop_loss": {
+      "trades": 54,
+      "win_rate": 0.0,
+      "pnl": -2431.93,
+      "profit_factor": 0.0,
+      "avg_win": 0.0,
+      "avg_loss": -45.04
+    },
+    "target_hit": {
+      "trades": 21,
+      "win_rate": 100.0,
+      "pnl": 1339.72,
+      "profit_factor": Infinity,
+      "avg_win": 63.8,
+      "avg_loss": 0.0
+    }
+  },
+  "note": "Synthetic Black-Scholes 0DTE premiums seeded from VIX over real hourly underlying data; includes slippage + commissions. Validation of strategy shape, not a fill-accurate P&L."
+}
