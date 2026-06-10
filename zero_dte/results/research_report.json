@@ -1,0 +1,205 @@
+{
+  "split": "2025-07-01",
+  "grid_top10": [
+    {
+      "config": "pm_momo1430|time|vix<20|anytrend",
+      "train": {
+        "trades": 646,
+        "win_rate": 24.0,
+        "pnl": -15450.89,
+        "pf": 0.52,
+        "avg": -23.92
+      },
+      "test": {
+        "trades": 287,
+        "win_rate": 16.4,
+        "pnl": -17312.85,
+        "pf": 0.23,
+        "avg": -60.32
+      }
+    },
+    {
+      "config": "gap_go1030|time|vix<20|anytrend",
+      "train": {
+        "trades": 227,
+        "win_rate": 31.7,
+        "pnl": -10796.7,
+        "pf": 0.49,
+        "avg": -47.56
+      },
+      "test": {
+        "trades": 85,
+        "win_rate": 20.0,
+        "pnl": -7095.32,
+        "pf": 0.43,
+        "avg": -83.47
+      }
+    },
+    {
+      "config": "pm_momo1430|time|vix<20|align",
+      "train": {
+        "trades": 323,
+        "win_rate": 22.3,
+        "pnl": -7995.85,
+        "pf": 0.48,
+        "avg": -24.75
+      },
+      "test": {
+        "trades": 147,
+        "win_rate": 13.6,
+        "pnl": -10435.18,
+        "pf": 0.12,
+        "avg": -70.99
+      }
+    },
+    {
+      "config": "fade1330|t100|vix12-26|align",
+      "train": {
+        "trades": 173,
+        "win_rate": 33.5,
+        "pnl": -6103.79,
+        "pf": 0.48,
+        "avg": -35.28
+      },
+      "test": {
+        "trades": 102,
+        "win_rate": 25.5,
+        "pnl": -6236.01,
+        "pf": 0.37,
+        "avg": -61.14
+      }
+    },
+    {
+      "config": "pm_momo1430|time|anyvix|anytrend",
+      "train": {
+        "trades": 793,
+        "win_rate": 24.0,
+        "pnl": -23394.61,
+        "pf": 0.47,
+        "avg": -29.5
+      },
+      "test": {
+        "trades": 374,
+        "win_rate": 17.1,
+        "pnl": -22722.21,
+        "pf": 0.26,
+        "avg": -60.75
+      }
+    },
+    {
+      "config": "pm_momo1430|time|vix12-26|anytrend",
+      "train": {
+        "trades": 745,
+        "win_rate": 23.4,
+        "pnl": -22035.2,
+        "pf": 0.46,
+        "avg": -29.58
+      },
+      "test": {
+        "trades": 357,
+        "win_rate": 16.8,
+        "pnl": -22417.72,
+        "pf": 0.23,
+        "avg": -62.79
+      }
+    },
+    {
+      "config": "fade1330|time|vix<20|align",
+      "train": {
+        "trades": 142,
+        "win_rate": 29.6,
+        "pnl": -5252.63,
+        "pf": 0.46,
+        "avg": -36.99
+      },
+      "test": {
+        "trades": 71,
+        "win_rate": 26.8,
+        "pnl": -3695.92,
+        "pf": 0.38,
+        "avg": -52.06
+      }
+    },
+    {
+      "config": "gap_go1030|time|vix12-26|anytrend",
+      "train": {
+        "trades": 269,
+        "win_rate": 31.2,
+        "pnl": -14610.93,
+        "pf": 0.46,
+        "avg": -54.32
+      },
+      "test": {
+        "trades": 121,
+        "win_rate": 19.0,
+        "pnl": -13979.62,
+        "pf": 0.3,
+        "avg": -115.53
+      }
+    },
+    {
+      "config": "pm_momo1430|time|anyvix|align",
+      "train": {
+        "trades": 402,
+        "win_rate": 23.1,
+        "pnl": -11666.0,
+        "pf": 0.45,
+        "avg": -29.02
+      },
+      "test": {
+        "trades": 177,
+        "win_rate": 15.3,
+        "pnl": -11400.66,
+        "pf": 0.19,
+        "avg": -64.41
+      }
+    },
+    {
+      "config": "fade1330|t100|vix<20|align",
+      "train": {
+        "trades": 142,
+        "win_rate": 33.1,
+        "pnl": -5140.33,
+        "pf": 0.45,
+        "avg": -36.2
+      },
+      "test": {
+        "trades": 71,
+        "win_rate": 26.8,
+        "pnl": -3607.54,
+        "pf": 0.4,
+        "avg": -50.81
+      }
+    }
+  ],
+  "survivors_oos": [],
+  "selected": "pm_momo1430|time|vix<20|anytrend",
+  "oos_validated": false,
+  "base_oos": {
+    "trades": 287,
+    "win_rate": 16.4,
+    "pnl": -17312.85,
+    "pf": 0.23,
+    "avg": -60.32
+  },
+  "ml_gated_oos": {
+    "trades": 0,
+    "win_rate": 0,
+    "pnl": 0,
+    "pf": 0,
+    "avg": 0
+  },
+  "account_base_oos": {
+    "end_capital": 386.89,
+    "return_pct": -74.21,
+    "max_dd_pct": -70.29,
+    "executed": 15
+  },
+  "account_gated_oos": {
+    "end_capital": 1500.0,
+    "return_pct": 0.0,
+    "max_dd_pct": 0.0,
+    "executed": 0
+  },
+  "equity_curve_gated": []
+}

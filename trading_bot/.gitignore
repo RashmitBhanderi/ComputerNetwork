@@ -1,0 +1,23 @@
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# SQLite database (regenerated at runtime)
+database/*.db
+database/*.db-wal
+database/*.db-shm
+
+# Logs (keep the directory, ignore contents)
+logs/*.log
+logs/*.log.*
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
