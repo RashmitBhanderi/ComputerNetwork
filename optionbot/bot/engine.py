@@ -2,6 +2,8 @@
 import csv
 import json
 import logging
+import subprocess
+import sys
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -316,11 +318,33 @@ class Engine:
                  "| symbol | contract | qty | entry | exit | pnl | reason |", "|---|---|---|---|---|---|---|"]
         lines += [f"| {r['symbol']} | {r['code']} | {r['qty']} | {r['entry']} | {r['exit']} | {r['pnl']} | {r['reason']} |"
                   for r in rows]
+        if self.c.get("ai_enabled") and self.c.get("daily_review"):
+            try:
+                review = self.ai.daily_review({k: v for k, v in d.items() if k != "rejected"}, self._history(d["date"]), self.c)
+                lines += ["", "## Claude's review", "", review or "(review unavailable)"]
+            except Exception as e:
+                log.error("daily review failed: %s", e)
+        self._notify(f"{d['date']}: {len(rows)} trades, P&L {d['realized']:+.2f}, equity {self.risk.equity(self.s, None):.2f}")
         (self.dir / "reports").mkdir(exist_ok=True)
         (self.dir / "reports" / f"{d['date']}.md").write_text("\n".join(lines) + "\n")
         d["reported"] = True
         self.save()
         log.info("day done: %d trades, P&L %.2f", len(rows), d["realized"])
+
+    def _history(self, today, n=40):
+        f = self.dir / "trades.csv"
+        if not f.exists():
+            return []
+        with f.open() as fh:
+            rows = [r for r in csv.DictReader(fh) if r["date"] != today]
+        return [{k: r[k] for k in ("date", "opened", "symbol", "direction", "entry", "exit", "pnl", "reason")} for r in rows[-n:]]
+
+    def _notify(self, text):
+        if sys.platform == "darwin":
+            try:
+                subprocess.run(["osascript", "-e", f'display notification "{text}" with title "optionbot"'], timeout=10)
+            except Exception:
+                pass
 
     # ---- loops ----
     def connect(self, until: datetime) -> bool:

@@ -11,7 +11,7 @@ candidate trade through the Claude Code CLI on your Mac.
 | 09:45–15:00 | Every 5 min: scores each symbol on 5 momentum checks, picks a liquid contract, sends the survivors to Claude, buys the approved ones |
 | all day | Every 20 s: checks open positions against stop (-30%), target (+50%), breakeven stop and the daily loss limit |
 | 15:45 | Sells everything. Nothing is held overnight |
-| 16:00 | Writes `data/<mode>/reports/<date>.md` |
+| after the last exit | Claude audits every trade of the day; the result goes to `data/<mode>/reports/<date>.md` and a Mac notification shows the day's P&L |
 
 All limits live in `config.yaml`. The AI can only veto trades; it cannot change size, stops or limits.
 
@@ -27,6 +27,12 @@ curl -fsSL https://claude.ai/install.sh | bash
 
 ```bash
 claude
+```
+
+After steps 1 and 2, this one command does steps 3, 4 and 6 (it asks before going live):
+
+```bash
+bash scripts/setup_mac.sh
 ```
 
 3. Install the bot:

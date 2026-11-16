@@ -11,11 +11,11 @@ security_firm: FUTUINC      # moomoo US. Other regions: FUTUSG, FUTUAU, FUTUCA, 
 account_id: 0               # 0 = first matching account; set the acc_id shown by `check` to pin one
 
 # ---- Money ------------------------------------------------------------
-capital: 1000               # the bot never sizes off more than this (+/- its own realised P&L)
+capital: 1500               # the bot never sizes off more than this (+/- its own realised P&L)
 fee_per_contract: 0.70      # estimate per contract per side, used for P&L only
 
 # ---- Universe ---------------------------------------------------------
-# SPX index options cost far more than a $1000 account can risk per trade,
+# SPX index options cost far more than a $1500 account can risk per trade,
 # so SPY stands in for it.
 symbols: [SPY, QQQ, IWM, AAPL, NVDA, TSLA, AMD, AMZN, META, MSFT, GOOGL, PLTR]
 
@@ -54,10 +54,12 @@ min_volume: 50
 
 # ---- AI ---------------------------------------------------------------
 # Uses the Claude Code CLI you are already logged into (subscription usage,
-# no API key). Lower-cost model names work here too, e.g. "sonnet" or "haiku".
+# no API key). "opus" is the strongest widely available alias; "sonnet" or
+# "haiku" use less of your subscription allowance.
 ai_enabled: true
-ai_model: sonnet
+ai_model: opus
 ai_min_confidence: 0.6
 ai_max_calls_per_day: 40
 ai_recheck_minutes: 20      # don't re-ask about a symbol the AI just rejected
-ai_timeout_seconds: 120
+ai_timeout_seconds: 180
+daily_review: true          # after the close, Claude audits the day's trades into the report

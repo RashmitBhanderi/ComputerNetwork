@@ -24,14 +24,20 @@ SYSTEM = (
 )
 
 
-def _call(prompt: str, cfg: dict) -> str | None:
+REVIEW_SYSTEM = (
+    "You audit the trading day of an automated intraday long-options bot. Be direct and "
+    "specific. Do not praise. Plain text, no markdown headings."
+)
+
+
+def _call(prompt: str, cfg: dict, system: str = SYSTEM) -> str | None:
     exe = shutil.which("claude")
     if not exe:
         log.error("claude CLI not found on PATH")
         return None
     env = {k: v for k, v in os.environ.items() if k != "ANTHROPIC_API_KEY"}  # force subscription login
     cmd = [exe, "-p", "--output-format", "json", "--tools", "", "--no-session-persistence",
-           "--system-prompt", SYSTEM]
+           "--system-prompt", system]
     if cfg.get("ai_model"):
         cmd += ["--model", str(cfg["ai_model"])]
     try:
@@ -89,3 +95,19 @@ def morning_brief(market: dict, cfg: dict) -> str:
     if isinstance(obj, dict) and "brief" in obj:
         return f"{obj.get('bias', 'mixed')}: {obj['brief']}"[:700]
     return ""
+
+
+def daily_review(day: dict, history: list[dict], cfg: dict) -> str:
+    """End-of-day audit of every trade. Advice only; nothing is applied automatically."""
+    rules = {k: cfg[k] for k in ("capital", "max_trades_per_day", "max_open_positions", "max_premium_pct",
+                                 "stop_loss_pct", "take_profit_pct", "max_daily_loss_pct", "min_score")}
+    prompt = (
+        "Rules the bot must follow:\n" + json.dumps(rules) +
+        "\n\nToday:\n" + json.dumps(day, indent=1) +
+        "\n\nEarlier closed trades (most recent last):\n" + json.dumps(history, indent=1) +
+        "\n\nWrite at most 200 words covering: (1) each trade today - was the entry reason sound and did the "
+        "exit follow the rules; (2) any rule breach or suspicious fill (exit far past the stop, size over the cap); "
+        "(3) patterns across the history (symbols, times, directions that keep losing); (4) at most two concrete "
+        "config changes worth considering, or 'none' if the sample is too small to say."
+    )
+    return (_call(prompt, cfg, REVIEW_SYSTEM) or "").strip()

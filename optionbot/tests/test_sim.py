@@ -24,7 +24,7 @@ class FakeBroker:
         self.clock, self.drift, self.reject = clock, drift, reject_orders
         self.orders, self.entry_spot = [], {}
     def close(self): pass
-    def account(self): return {"assets": 1000.0, "cash": 1000.0, "power": 1000.0}
+    def account(self): return {"assets": 1500.0, "cash": 1500.0, "power": 1500.0}
     def spot(self, sym):
         n = self.clock.now()
         mins = max(0, (n - n.replace(hour=9, minute=30, second=0)).total_seconds() / 60)
@@ -66,6 +66,7 @@ class FakeBroker:
 class FakeAI:
     def __init__(self, take=True): self.take, self.calls = take, 0
     def morning_brief(self, m, c): return "mixed: test"
+    def daily_review(self, day, hist, c): return "REVIEW-OK"
     def review(self, cands, ctx, c):
         self.calls += 1
         return {x["symbol"]: {"take": self.take, "confidence": 0.8, "reason": "t"} for x in cands}
@@ -85,10 +86,11 @@ def test_uptrend_buys_calls_and_takes_profit(tmp_path):
     rows = e.day["closed"]
     assert rows and all(r["direction"] == "CALL" for r in rows)
     assert any(r["reason"] == "target" for r in rows)
-    assert all(o[2] == 1 and o[3] <= 1.0 for o in b.orders if o[0] == "BUY")   # 1 contract, <= $100
+    assert all(o[2] == 1 and o[3] <= 1.5 for o in b.orders if o[0] == "BUY")   # 1 contract, <= $100
     assert not e.pos and e.day["reported"]
     assert e.day["trades"] <= CFG["max_trades_per_day"]
-    assert (tmp_path / "trades.csv").exists() and (tmp_path / "reports" / "2026-11-17.md").exists()
+    assert (tmp_path / "trades.csv").exists()
+    assert "REVIEW-OK" in (tmp_path / "reports" / "2026-11-17.md").read_text()
 
 
 def test_downtrend_buys_puts(tmp_path):
