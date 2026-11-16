@@ -1,0 +1,63 @@
+# ---- Mode -------------------------------------------------------------
+# live    = real orders in your real moomoo account
+# paper   = orders go to moomoo's simulated account
+# dry_run = no orders sent anywhere; fills are simulated at the limit price
+mode: live
+
+# ---- Connection -------------------------------------------------------
+opend_host: 127.0.0.1
+opend_port: 11111
+security_firm: FUTUINC      # moomoo US. Other regions: FUTUSG, FUTUAU, FUTUCA, FUTUMY, FUTUJP
+account_id: 0               # 0 = first matching account; set the acc_id shown by `check` to pin one
+
+# ---- Money ------------------------------------------------------------
+capital: 1000               # the bot never sizes off more than this (+/- its own realised P&L)
+fee_per_contract: 0.70      # estimate per contract per side, used for P&L only
+
+# ---- Universe ---------------------------------------------------------
+# SPX index options cost far more than a $1000 account can risk per trade,
+# so SPY stands in for it.
+symbols: [SPY, QQQ, IWM, AAPL, NVDA, TSLA, AMD, AMZN, META, MSFT, GOOGL, PLTR]
+
+# ---- Schedule (US/Eastern) --------------------------------------------
+prep_time: "09:00"          # connect, check account, morning AI brief
+first_entry: "09:45"        # skip the first 15 minutes
+last_entry: "15:00"
+flatten_time: "15:45"       # everything is closed by here, nothing held overnight
+scan_minutes: 5
+manage_seconds: 20
+holidays: ["2026-11-26", "2026-12-25", "2027-01-01", "2027-01-18", "2027-02-15",
+           "2027-03-26", "2027-05-31", "2027-06-18", "2027-07-05", "2027-09-06",
+           "2027-11-25", "2027-12-24"]
+early_closes: ["2026-11-27", "2026-12-24", "2027-11-26"]   # 13:00 close; times shift 3h earlier
+
+# ---- Risk rules (the AI cannot override any of these) ------------------
+max_trades_per_day: 10      # a ceiling, not a target
+max_open_positions: 3
+max_premium_pct: 10         # max cost of one trade, % of bot equity
+stop_loss_pct: 30           # exit when the option is down this much
+take_profit_pct: 50
+breakeven_trigger_pct: 25   # once up this much, the stop moves to entry price
+max_daily_loss_pct: 6       # realised + open loss; hit it and the bot flattens and stops for the day
+reuse_proceeds_same_day: false   # false = cash-account safe (no good-faith violations)
+
+# ---- Signal + contract filters ----------------------------------------
+min_score: 4                # of 5 momentum checks
+min_dte: 2
+max_dte: 14
+delta_min: 0.30
+delta_max: 0.60
+delta_target: 0.45
+max_spread_pct: 10          # (ask - bid) / mid
+min_open_interest: 300
+min_volume: 50
+
+# ---- AI ---------------------------------------------------------------
+# Uses the Claude Code CLI you are already logged into (subscription usage,
+# no API key). Lower-cost model names work here too, e.g. "sonnet" or "haiku".
+ai_enabled: true
+ai_model: sonnet
+ai_min_confidence: 0.6
+ai_max_calls_per_day: 40
+ai_recheck_minutes: 20      # don't re-ask about a symbol the AI just rejected
+ai_timeout_seconds: 120
