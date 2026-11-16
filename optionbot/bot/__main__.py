@@ -31,19 +31,21 @@ def check(cfg):
     from .broker import MoomooBroker
     print(f"mode: {cfg['mode']}")
     b = MoomooBroker(cfg)
-    print("OpenD connection: OK")
-    print(b.accounts()[["acc_id", "trd_env", "acc_type", "security_firm"]].to_string(index=False))
-    print(f"using account {b.acc_id}: {b.account()}")
-    und = b.underlying(["SPY"])["SPY"]
-    print(f"SPY quote: {und}")
-    bars = b.bars("SPY")
-    print(f"SPY 5-min bars: {len(bars)} (last {bars['time_key'].iloc[-1]})")
-    print("SPY signal:", signals.evaluate(bars, datetime.now(ET).strftime("%Y-%m-%d"), und["prev_close"]))
-    opts = b.option_candidates("SPY", "CALL", und["last"])
-    print(f"SPY call contracts in DTE window: {len(opts)}")
-    if opts:
-        print("  sample:", min(opts, key=lambda o: abs(abs(o["delta"]) - 0.45)))
-    b.close()
+    try:
+        print("OpenD connection: OK")
+        print(b.accounts()[["acc_id", "trd_env", "acc_type", "security_firm"]].to_string(index=False))
+        print(f"using account {b.acc_id}: {b.account()}")
+        und = b.underlying(["SPY"])["SPY"]
+        print(f"SPY quote: {und}")
+        bars = b.bars("SPY")
+        print(f"SPY 5-min bars: {len(bars)} (last {bars['time_key'].iloc[-1]})")
+        print("SPY signal:", signals.evaluate(bars, datetime.now(ET).strftime("%Y-%m-%d"), und["prev_close"]))
+        opts = b.option_candidates("SPY", "CALL", und["last"])
+        print(f"SPY call contracts in DTE window: {len(opts)}")
+        if opts:
+            print("  sample:", min(opts, key=lambda o: abs(abs(o["delta"]) - 0.45)))
+    finally:
+        b.close()  # otherwise the SDK's threads keep the process alive after an error
     if cfg.get("ai_enabled"):
         r = ai._call('Reply with exactly: {"ok": true}', cfg)
         print("Claude CLI:", "OK" if r and "ok" in r else "FAILED (run `claude` once and log in)")

@@ -7,7 +7,7 @@ mode: live
 # ---- Connection -------------------------------------------------------
 opend_host: 127.0.0.1
 opend_port: 11111
-security_firm: FUTUINC      # moomoo US. Other regions: FUTUSG, FUTUAU, FUTUCA, FUTUMY, FUTUJP
+security_firm: FUTUCA       # moomoo Canada. Other regions: FUTUINC (US), FUTUSG, FUTUAU, FUTUMY, FUTUJP
 account_id: 0               # 0 = first matching account; set the acc_id shown by `check` to pin one
 
 # ---- Money ------------------------------------------------------------

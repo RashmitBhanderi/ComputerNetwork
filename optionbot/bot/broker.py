@@ -20,13 +20,17 @@ class MoomooBroker:
         self.q = mm.OpenQuoteContext(host=cfg["opend_host"], port=cfg["opend_port"])
         self.t = mm.OpenSecTradeContext(filter_trdmarket=mm.TrdMarket.US, host=cfg["opend_host"],
                                         port=cfg["opend_port"], security_firm=cfg["security_firm"])
-        self.acc_id = self._pick_account()
+        self._subscribed = set()
+        try:
+            self.acc_id = self._pick_account()
+        except Exception:
+            self.close()  # the SDK's network threads keep the process alive unless both contexts are closed
+            raise
         pwd = os.environ.get("MOOMOO_TRADE_PWD")
         if cfg["mode"] == "live" and pwd:  # otherwise unlock trading in the OpenD window
             ret, data = self.t.unlock_trade(password=pwd)
             if ret != mm.RET_OK:
                 log.warning("unlock_trade failed (%s); unlock in the OpenD window instead", data)
-        self._subscribed = set()
 
     def close(self):
         self.q.close()
@@ -43,7 +47,8 @@ class MoomooBroker:
         if self.c.get("account_id"):
             df = df[df["acc_id"] == int(self.c["account_id"])]
         if df.empty:
-            raise BrokerError(f"no {self.env} account found in OpenD")
+            raise BrokerError(f"no {self.env} account found in OpenD for security_firm={self.c['security_firm']} "
+                              "(check security_firm / account_id in config.yaml)")
         return int(df["acc_id"].iloc[0])
 
     def accounts(self):
@@ -53,7 +58,14 @@ class MoomooBroker:
         df = self._ok(*self.t.accinfo_query(trd_env=self.env, acc_id=self.acc_id, refresh_cache=True,
                                             currency=self.mm.Currency.USD), "accinfo_query")
         r = df.iloc[0]
-        return {"assets": float(r["total_assets"]), "cash": float(r["cash"]), "power": float(r["power"])}
+        cash = float(r["cash"])
+        # Multi-currency accounts (e.g. moomoo Canada) report "cash" as every currency converted to USD.
+        # US options settle in USD, so only the USD balance is spendable.
+        try:
+            cash = min(cash, float(r["us_cash"]))
+        except (KeyError, TypeError, ValueError):
+            pass  # single-currency account: field missing or "N/A"
+        return {"assets": float(r["total_assets"]), "cash": cash, "power": float(r["power"])}
 
     # ---- market data ----
     def bars(self, symbol: str, n: int = 120):
